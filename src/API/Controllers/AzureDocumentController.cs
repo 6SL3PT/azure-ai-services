@@ -36,4 +36,23 @@ public class AzureDocumentController : ControllerBase
             return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
+
+    [HttpPost("uri")]
+    public async Task<IActionResult> TextExtractFromUri([FromBody] UriRequest request)
+    {
+        if (string.IsNullOrEmpty(request.UriDocument))
+        {
+            return BadRequest("No URI provided.");
+        }
+
+        try
+        {
+            var result = await _azureDocumentService.AnalyzeDocumentUriAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
 }
