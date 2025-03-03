@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure.AI.FormRecognizer.DocumentAnalysis;
+
+using Microsoft.AspNetCore.Http;
 
 using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Extensions;
@@ -25,69 +27,21 @@ public class AzureDocumentService: IAzureDocumentService {
         using var stream = new MemoryStream(documentBytes);
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
 
-        var fieldDict = response.Documents
-            .SelectMany(doc => doc.Fields)
-            .ToDictionary(
-                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
-                fieldKvp => new SlipFieldDto {
-                    Content = fieldKvp.Value.Content,
-                    Confidence = fieldKvp.Value.Confidence
-                }
-            );
-
-        return new ResponseMessage<AnalyzeResultResponse>(
-            new AnalyzeResultResponse {
-                ApiVersion = response.ServiceVersion,
-                ModelId = response.ModelId,
-                Content = response.Content,
-                Fields = fieldDict
-            });
+        return ConvertResponseToResult(response);
     }
 
     public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBytesAsync(IFormFile document) {
         using var documentStream = document.OpenReadStream();
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(documentStream);
 
-        var fieldDict = response.Documents
-        .SelectMany(doc => doc.Fields)
-        .ToDictionary(
-            fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
-            fieldKvp => new SlipFieldDto {
-                Content = fieldKvp.Value.Content,
-                Confidence = fieldKvp.Value.Confidence
-            }
-        );
-
-        return new ResponseMessage<AnalyzeResultResponse>(
-            new AnalyzeResultResponse {
-                ApiVersion = response.ServiceVersion,
-                ModelId = response.ModelId,
-                Content = response.Content,
-                Fields = fieldDict
-            });
+        return ConvertResponseToResult(response);
     }
 
     public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentUriAsync(UriRequest request) {
         var documentUri = new Uri(request.UriDocument);
         var response = await _azureDocumentClient.AnalyzeDocumentUriAsync(documentUri);
 
-        var fieldDict = response.Documents
-            .SelectMany(doc => doc.Fields)
-            .ToDictionary(
-                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
-                fieldKvp => new SlipFieldDto {
-                    Content = fieldKvp.Value.Content,
-                    Confidence = fieldKvp.Value.Confidence
-                }
-            );
-
-        return new ResponseMessage<AnalyzeResultResponse>(
-            new AnalyzeResultResponse {
-                ApiVersion = response.ServiceVersion,
-                ModelId = response.ModelId,
-                Content = response.Content,
-                Fields = fieldDict
-            });
+        return ConvertResponseToResult(response);
     }
 
     public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentAzureBlobAsync(AzureBlobRequest request) {
@@ -102,6 +56,17 @@ public class AzureDocumentService: IAzureDocumentService {
 
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(memoryStream);
 
+        return ConvertResponseToResult(response);
+    }
+
+    private static ResponseMessage<AnalyzeResultResponse> ConvertResponseToResult(AnalyzeResult response) {
+        if(response.Documents == null || response.Documents.Count == 0) {
+            return new ResponseMessage<AnalyzeResultResponse>(
+            new AnalyzeResultResponse {
+                Success = false
+            });
+        }
+
         var fieldDict = response.Documents
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
@@ -114,6 +79,7 @@ public class AzureDocumentService: IAzureDocumentService {
 
         return new ResponseMessage<AnalyzeResultResponse>(
             new AnalyzeResultResponse {
+                Success = true,
                 ApiVersion = response.ServiceVersion,
                 ModelId = response.ModelId,
                 Content = response.Content,

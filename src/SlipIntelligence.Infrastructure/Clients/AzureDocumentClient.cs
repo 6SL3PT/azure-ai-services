@@ -9,8 +9,8 @@ public class AzureDocumentClient: IAzureDocumentClient {
     private readonly DocumentAnalysisClient _client;
     private readonly string _modelId;
 
-    public AzureDocumentClient(string endpoint, string apiKey, string modelId) {
-        _client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
+    public AzureDocumentClient(DocumentAnalysisClient client, string modelId) {
+        _client = client;
         _modelId = modelId;
     }
 

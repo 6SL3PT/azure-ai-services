@@ -1,9 +1,12 @@
-﻿using SlipIntelligence.Api.Middlewares;
+﻿using Azure;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
+using Azure.Storage.Blobs;
+using Microsoft.OpenApi.Models;
+using SlipIntelligence.Api.Middlewares;
 using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Services;
 using SlipIntelligence.Infrastructure.Interfaces;
 using SlipIntelligence.Infrastructure.Clients;
-using Microsoft.OpenApi.Models;
 
 namespace SlipIntelligence.API;
 public class Startup {
@@ -24,14 +27,14 @@ public class Startup {
                 ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ApiToken is not configured.");
             var modelId = Configuration["Azure:DocumentIntelligence:ModelId"]
                 ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ModelId is not configured.");
-            return new AzureDocumentClient(endpoint, apiKey, modelId);
+            return new AzureDocumentClient(new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey)), modelId);
         });
 
         // Configure Azure Blob Storage client
         services.AddSingleton<IAzureBlobClient>(s => {
             var connectionString = Configuration["Azure:BlobStorage:ConnectionString"]
                 ?? throw new InvalidOperationException("Azure:BlobStorage:ConnectionString is not configured.");
-            return new AzureBlobClient(connectionString);
+            return new AzureBlobClient(new BlobServiceClient(connectionString));
         });
 
         // Register application services
