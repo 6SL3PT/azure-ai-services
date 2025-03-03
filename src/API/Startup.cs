@@ -25,7 +25,7 @@ public class Startup
         services.AddControllers();
 
         // Configure Azure Document Intelligence client
-        services.AddSingleton<IAzureDocumentClient>(sp =>
+        services.AddSingleton<IAzureDocumentClient>(s =>
             {
                 var endpoint = Configuration["Azure:DocumentIntelligence:Endpoint"]
                     ?? throw new InvalidOperationException("Azure:DocumentIntelligence:Endpoint is not configured.");
@@ -34,6 +34,14 @@ public class Startup
                 var modelId = Configuration["Azure:DocumentIntelligence:ModelId"]
                     ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ModelId is not configured.");
                 return new AzureDocumentClient(endpoint, apiKey, modelId);
+            });
+
+        // Configure Azure Blob Storage client
+        services.AddSingleton<IAzureBlobClient>(s =>
+            {
+                var connectionString = Configuration["Azure:BlobStorage:ConnectionString"]
+                    ?? throw new InvalidOperationException("Azure:BlobStorage:ConnectionString is not configured.");
+                return new AzureBlobClient(connectionString);
             });
 
         // Register application services

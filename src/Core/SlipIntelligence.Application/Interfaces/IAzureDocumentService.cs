@@ -8,4 +8,5 @@ public interface IAzureDocumentService
 {
     Task<AnalyzeResultDto> AnalyzeDocumentBase64Async(Base64Request request);
     Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(UriRequest request);
+    Task<AnalyzeResultDto> AnalyzeDocumentAzureBlobAsync(AzureBlobRequest request);
 }

@@ -55,4 +55,28 @@ public class AzureDocumentController : ControllerBase
             return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
+
+    [HttpPost("azure-blob")]
+    public async Task<IActionResult> TextExtractFromAzureBlob([FromBody] AzureBlobRequest request)
+    {
+        if (string.IsNullOrEmpty(request.ContainerName))
+        {
+            return BadRequest("No container name provided.");
+        }
+
+        if (string.IsNullOrEmpty(request.BlobName))
+        {
+            return BadRequest("No blob name provided.");
+        }
+
+        try
+        {
+            var result = await _azureDocumentService.AnalyzeDocumentAzureBlobAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to process invoice: {ex.Message}");
+        }
+    }
 }
