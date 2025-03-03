@@ -6,59 +6,73 @@ using SlipIntelligence.Application.Models;
 using SlipIntelligence.Application.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using System.Text;
 
 namespace SlipIntelligence.Tests.SlipIntelligence;
 
 public class AzureDocumentControllerTest {
-    private readonly Mock<IAzureDocumentService> _mockAzureDocumentService;
+    private readonly Mock<IAzureDocumentService> _mockService;
     private readonly AzureDocumentController _azureDocumentController;
 
     public AzureDocumentControllerTest() {
-        _mockAzureDocumentService = new Mock<IAzureDocumentService>();
-        _azureDocumentController = new AzureDocumentController(_mockAzureDocumentService.Object);
+        _mockService = new Mock<IAzureDocumentService>();
+        _azureDocumentController = new AzureDocumentController(_mockService.Object);
     }
+
+    private ResponseMessage<AnalyzeResultResponse> CreateAnalyzeResultResponse(bool success = true) {
+        var analyzeResponse = new AnalyzeResultResponse {
+            Success = success,
+            ApiVersion = "1.0",
+            ModelId = "test-model-id",
+            Content = "Extracted content",
+            Fields = new Dictionary<string, SlipFieldDto> {
+                { "field1", new SlipFieldDto { Content = "Field 1", Confidence = 0.97f } },
+                { "field2", new SlipFieldDto { Content = "Field 2", Confidence = 0.5f } }
+            }
+        };
+        return new ResponseMessage<AnalyzeResultResponse>(analyzeResponse);
+    }
+
+    #region TextExtractFromBase64 Tests
 
     [Fact]
     public async Task TextExtractFromBase64_ValidRequest_ReturnsOkResult() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new Base64Request { Base64Document = "JVBERi0xLjMKJcfs..." };
-        var responseMessage = new ResponseMessage<AnalyzeResultResponse>(new AnalyzeResultResponse { Success = true });
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentBase64Async(request, modelId))
-            .ReturnsAsync(responseMessage);
+        var modelId = "test-model-id";
+        var request = new Base64Request { Base64Document = "validBase64String" };
+        var expectedResponse = CreateAnalyzeResultResponse();
+
+        _mockService.Setup(s => s.AnalyzeDocumentBase64Async(request, modelId))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _azureDocumentController.TextExtractFromBase64(modelId, request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Equal(responseMessage, okResult.Value);
+        Assert.Equal(expectedResponse, okResult.Value);
     }
 
     [Fact]
-    public async Task TextExtractFromBase64_InvalidRequest_ReturnsBadRequest() {
+    public async Task TextExtractFromBase64_NoDocument_ReturnsBadRequest() {
         // Arrange
-        var modelId = "prebuilt-invoice";
+        var modelId = "test-model-id";
         var request = new Base64Request { Base64Document = "" };
 
         // Act
         var result = await _azureDocumentController.TextExtractFromBase64(modelId, request);
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No document provided.", badRequestResult.Value);
     }
 
     [Fact]
-    public async Task TextExtractFromBase64_Exception_ReturnsInternalServerError() {
+    public async Task TextExtractFromBase64_InternalServerError_Returns500() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new Base64Request { Base64Document = "JVBERi0xLjMKJcfs..." };
-        var exceptionMessage = "Something went wrong";
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentBase64Async(request, modelId))
-            .ThrowsAsync(new Exception(exceptionMessage));
+        var modelId = "test-model-id";
+        var request = new Base64Request { Base64Document = "validBase64String" };
+        _mockService.Setup(s => s.AnalyzeDocumentBase64Async(request, modelId))
+            .ThrowsAsync(new Exception("Internal error"));
 
         // Act
         var result = await _azureDocumentController.TextExtractFromBase64(modelId, request);
@@ -66,107 +80,122 @@ public class AzureDocumentControllerTest {
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusCodeResult.StatusCode);
-        Assert.Equal($"Internal server error: {exceptionMessage}", statusCodeResult.Value);
+        Assert.Equal("Internal server error: Internal error", statusCodeResult.Value);
     }
+
+    #endregion
+
+    #region TextExtractFromBytes Tests
 
     [Fact]
     public async Task TextExtractFromBytes_ValidRequest_ReturnsOkResult() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var fileMock = new Mock<IFormFile>();
-        var documentStream = new MemoryStream(Encoding.UTF8.GetBytes("Sample document content"));
-        fileMock.Setup(f => f.OpenReadStream()).Returns(documentStream);
-        fileMock.Setup(f => f.Length).Returns(documentStream.Length);
-        var document = fileMock.Object;
-        var responseMessage = new ResponseMessage<AnalyzeResultResponse>(new AnalyzeResultResponse { Success = true });
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentBytesAsync(document, modelId))
-            .ReturnsAsync(responseMessage);
+        var modelId = "test-model-id";
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.Length).Returns(10);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new MemoryStream(new byte[10]));
+        var expectedResponse = CreateAnalyzeResultResponse();
+
+        _mockService.Setup(s => s.AnalyzeDocumentBytesAsync(mockFile.Object, modelId))
+            .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _azureDocumentController.TextExtractFromBytes(modelId, document);
+        var result = await _azureDocumentController.TextExtractFromBytes(modelId, mockFile.Object);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Equal(responseMessage, okResult.Value);
+        Assert.Equal(expectedResponse, okResult.Value);
     }
 
     [Fact]
-    public async Task TextExtractFromBytes_InvalidRequest_ReturnsBadRequest() {
+    public async Task TextExtractFromBytes_NoFile_ReturnsBadRequest() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var document = null as IFormFile;
+        var modelId = "test-model-id";
 
         // Act
-        var result = await _azureDocumentController.TextExtractFromBytes(modelId, document);
+        var result = await _azureDocumentController.TextExtractFromBytes(modelId, null);
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No document provided.", badRequestResult.Value);
     }
 
     [Fact]
-    public async Task TextExtractFromBytes_Exception_ReturnsInternalServerError() {
+    public async Task TextExtractFromBytes_EmptyFile_ReturnsBadRequest() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var fileMock = new Mock<IFormFile>();
-        var documentStream = new MemoryStream(Encoding.UTF8.GetBytes("Sample document content"));
-        fileMock.Setup(f => f.OpenReadStream()).Returns(documentStream);
-        fileMock.Setup(f => f.Length).Returns(documentStream.Length);
-        var document = fileMock.Object;
-        var exceptionMessage = "Something went wrong";
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentBytesAsync(document, modelId))
-            .ThrowsAsync(new Exception(exceptionMessage));
+        var modelId = "test-model-id";
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.Length).Returns(0);
 
         // Act
-        var result = await _azureDocumentController.TextExtractFromBytes(modelId, document);
+        var result = await _azureDocumentController.TextExtractFromBytes(modelId, mockFile.Object);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No document provided.", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task TextExtractFromBytes_InternalServerError_Returns500() {
+        // Arrange
+        var modelId = "test-model-id";
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.Length).Returns(10);
+        _mockService.Setup(s => s.AnalyzeDocumentBytesAsync(mockFile.Object, modelId))
+            .ThrowsAsync(new Exception("Internal error"));
+
+        // Act
+        var result = await _azureDocumentController.TextExtractFromBytes(modelId, mockFile.Object);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusCodeResult.StatusCode);
-        Assert.Equal($"Internal server error: {exceptionMessage}", statusCodeResult.Value);
+        Assert.Equal("Internal server error: Internal error", statusCodeResult.Value);
     }
+
+    #endregion
+
+    #region TextExtractFromUri Tests
 
     [Fact]
     public async Task TextExtractFromUri_ValidRequest_ReturnsOkResult() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new UriRequest { UriDocument = "https://example.com/sample-document.pdf" };
-        var responseMessage = new ResponseMessage<AnalyzeResultResponse>(new AnalyzeResultResponse { Success = true });
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentUriAsync(request, modelId))
-            .ReturnsAsync(responseMessage);
+        var modelId = "test-model-id";
+        var request = new UriRequest { UriDocument = "http://example.com/document" };
+        var expectedResponse = CreateAnalyzeResultResponse();
+
+        _mockService.Setup(s => s.AnalyzeDocumentUriAsync(request, modelId))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _azureDocumentController.TextExtractFromUri(modelId, request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Equal(responseMessage, okResult.Value);
+        Assert.Equal(expectedResponse, okResult.Value);
     }
 
     [Fact]
-    public async Task TextExtractFromUri_InvalidRequest_ReturnsBadRequest() {
+    public async Task TextExtractFromUri_NoUri_ReturnsBadRequest() {
         // Arrange
-        var modelId = "prebuilt-invoice";
+        var modelId = "test-model-id";
         var request = new UriRequest { UriDocument = "" };
 
         // Act
         var result = await _azureDocumentController.TextExtractFromUri(modelId, request);
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No URI provided.", badRequestResult.Value);
     }
 
     [Fact]
-    public async Task TextExtractFromUri_Exception_ReturnsInternalServerError() {
+    public async Task TextExtractFromUri_InternalServerError_Returns500() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new UriRequest { UriDocument = "https://example.com/sample-document.pdf" };
-        var exceptionMessage = "Something went wrong";
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentUriAsync(request, modelId))
-            .ThrowsAsync(new Exception(exceptionMessage));
+        var modelId = "test-model-id";
+        var request = new UriRequest { UriDocument = "http://example.com/document" };
+        _mockService.Setup(s => s.AnalyzeDocumentUriAsync(request, modelId))
+            .ThrowsAsync(new Exception("Internal error"));
 
         // Act
         var result = await _azureDocumentController.TextExtractFromUri(modelId, request);
@@ -174,68 +203,74 @@ public class AzureDocumentControllerTest {
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusCodeResult.StatusCode);
-        Assert.Equal($"Internal server error: {exceptionMessage}", statusCodeResult.Value);
+        Assert.Equal("Internal server error: Internal error", statusCodeResult.Value);
     }
+
+    #endregion
+
+    #region TextExtractFromAzureBlob Tests
 
     [Fact]
     public async Task TextExtractFromAzureBlob_ValidRequest_ReturnsOkResult() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new AzureBlobRequest { ContainerName = "sample-container", BlobName = "sample-document.pdf" };
-        var responseMessage = new ResponseMessage<AnalyzeResultResponse>(new AnalyzeResultResponse { Success = true });
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentAzureBlobAsync(request, modelId))
-            .ReturnsAsync(responseMessage);
+        var modelId = "test-model-id";
+        var request = new AzureBlobRequest { ContainerName = "container", BlobName = "blob" };
+        var expectedResponse = CreateAnalyzeResultResponse();
+
+        _mockService.Setup(s => s.AnalyzeDocumentAzureBlobAsync(request, modelId))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _azureDocumentController.TextExtractFromAzureBlob(modelId, request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Equal(responseMessage, okResult.Value);
+        Assert.Equal(expectedResponse, okResult.Value);
     }
 
     [Fact]
     public async Task TextExtractFromAzureBlob_NoContainerName_ReturnsBadRequest() {
         // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new AzureBlobRequest { ContainerName = "", BlobName = "sample-document.pdf" };
-
-        // Act
-        var result = await _azureDocumentController.TextExtractFromAzureBlob(modelId, request);
-
-        // Assert
-        Assert.IsType<BadRequestObjectResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task TextExtractFromAzureBlob_NoBlobName_ReturnsBadRequest() {
-        // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new AzureBlobRequest { ContainerName = "sample-container", BlobName = "" };
-
-        // Act
-        var result = await _azureDocumentController.TextExtractFromAzureBlob(modelId, request);
-
-        // Assert
-        Assert.IsType<BadRequestObjectResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task TextExtractFromAzureBlob_Exception_ReturnsBadRequest() {
-        // Arrange
-        var modelId = "prebuilt-invoice";
-        var request = new AzureBlobRequest { ContainerName = "sample-container", BlobName = "sample-document.pdf" };
-        var exceptionMessage = "Something went wrong";
-        _mockAzureDocumentService
-            .Setup(service => service.AnalyzeDocumentAzureBlobAsync(request, modelId))
-            .ThrowsAsync(new Exception(exceptionMessage));
+        var modelId = "test-model-id";
+        var request = new AzureBlobRequest { ContainerName = "", BlobName = "blob" };
 
         // Act
         var result = await _azureDocumentController.TextExtractFromAzureBlob(modelId, request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal($"Failed to process invoice: {exceptionMessage}", badRequestResult.Value);
+        Assert.Equal("No container name provided.", badRequestResult.Value);
     }
+
+    [Fact]
+    public async Task TextExtractFromAzureBlob_NoBlobName_ReturnsBadRequest() {
+        // Arrange
+        var modelId = "test-model-id";
+        var request = new AzureBlobRequest { ContainerName = "container", BlobName = "" };
+
+        // Act
+        var result = await _azureDocumentController.TextExtractFromAzureBlob(modelId, request);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No blob name provided.", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task TextExtractFromAzureBlob_InternalServerError_ReturnsBadRequest() {
+        // Arrange
+        var modelId = "test-model-id";
+        var request = new AzureBlobRequest { ContainerName = "container", BlobName = "blob" };
+        _mockService.Setup(s => s.AnalyzeDocumentAzureBlobAsync(request, modelId))
+            .ThrowsAsync(new Exception("Internal error"));
+
+        // Act
+        var result = await _azureDocumentController.TextExtractFromAzureBlob(modelId, request);
+
+        // Assert
+        var badRequestResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal("Failed to process invoice: Internal error", badRequestResult.Value);
+    }
+
+    #endregion
 }

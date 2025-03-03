@@ -66,7 +66,7 @@ public class AzureDocumentController: ControllerBase {
             var result = await azureDocumentService.AnalyzeDocumentAzureBlobAsync(request, modelId);
             return Ok(result);
         } catch(Exception ex) {
-            return BadRequest($"Failed to process invoice: {ex.Message}");
+            return StatusCode(500, $"Failed to process invoice: {ex.Message}");
         }
     }
 }
