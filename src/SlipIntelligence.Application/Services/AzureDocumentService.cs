@@ -1,22 +1,20 @@
-﻿using SlipIntelligence.Application.Interfaces;
-using SlipIntelligence.Domain;
+﻿using SlipIntelligence.Application.Contracts.SlipIntelligence;
+using SlipIntelligence.Application.Extensions;
+using SlipIntelligence.Application.Models.SlipIntelligence;
 using SlipIntelligence.Infrastructure.Interfaces;
 
 namespace SlipIntelligence.Application.Services;
 
-public class AzureDocumentService : IAzureDocumentService
-{
+public class AzureDocumentService: IAzureDocumentService {
     private readonly IAzureBlobClient _azureBlobClient;
     private readonly IAzureDocumentClient _azureDocumentClient;
 
-    public AzureDocumentService(IAzureDocumentClient azureDocumentClient, IAzureBlobClient azureBlobClient)
-    {
+    public AzureDocumentService(IAzureDocumentClient azureDocumentClient, IAzureBlobClient azureBlobClient) {
         _azureBlobClient = azureBlobClient;
         _azureDocumentClient = azureDocumentClient;
     }
 
-    public async Task<AnalyzeResultDto> AnalyzeDocumentBase64Async(Base64Request request)
-    {
+    public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBase64Async(Base64Request request) {
         // Convert Base64 string to a byte array
         var documentBytes = Convert.FromBase64String(request.Base64Document);
 
@@ -27,24 +25,22 @@ public class AzureDocumentService : IAzureDocumentService
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
                 fieldKvp => fieldKvp.Key,
-                fieldKvp => new SlipField
-                {
+                fieldKvp => new SlipFieldDto {
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
                 }
             );
 
-        return new AnalyzeResultDto
-        {
-            ApiVersion = response.ServiceVersion,
-            ModelId = response.ModelId,
-            Content = response.Content,
-            Fields = fieldDict
-        };
+        return new ResponseMessage<AnalyzeResultResponse>(
+            new AnalyzeResultResponse {
+                ApiVersion = response.ServiceVersion,
+                ModelId = response.ModelId,
+                Content = response.Content,
+                Fields = fieldDict
+            });
     }
 
-    public async Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(UriRequest request)
-    {
+    public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentUriAsync(UriRequest request) {
         var documentUri = new Uri(request.UriDocument);
         var response = await _azureDocumentClient.AnalyzeDocumentUriAsync(documentUri);
 
@@ -52,24 +48,22 @@ public class AzureDocumentService : IAzureDocumentService
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
                 fieldKvp => fieldKvp.Key,
-                fieldKvp => new SlipField
-                {
+                fieldKvp => new SlipFieldDto {
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
                 }
             );
 
-        return new AnalyzeResultDto
-        {
-            ApiVersion = response.ServiceVersion,
-            ModelId = response.ModelId,
-            Content = response.Content,
-            Fields = fieldDict
-        };
+        return new ResponseMessage<AnalyzeResultResponse>(
+            new AnalyzeResultResponse {
+                ApiVersion = response.ServiceVersion,
+                ModelId = response.ModelId,
+                Content = response.Content,
+                Fields = fieldDict
+            });
     }
 
-    public async Task<AnalyzeResultDto> AnalyzeDocumentAzureBlobAsync(AzureBlobRequest request)
-    {
+    public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentAzureBlobAsync(AzureBlobRequest request) {
         var blobStream = await _azureBlobClient.GetBlobStreamAsync(request.ContainerName, request.BlobName);
 
         // Azure Document Intelligence requires the stream to be seekable
@@ -85,19 +79,18 @@ public class AzureDocumentService : IAzureDocumentService
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
                 fieldKvp => fieldKvp.Key,
-                fieldKvp => new SlipField
-                {
+                fieldKvp => new SlipFieldDto {
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
                 }
             );
 
-        return new AnalyzeResultDto
-        {
-            ApiVersion = response.ServiceVersion,
-            ModelId = response.ModelId,
-            Content = response.Content,
-            Fields = fieldDict
-        };
+        return new ResponseMessage<AnalyzeResultResponse>(
+            new AnalyzeResultResponse {
+                ApiVersion = response.ServiceVersion,
+                ModelId = response.ModelId,
+                Content = response.Content,
+                Fields = fieldDict
+            });
     }
 }

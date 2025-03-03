@@ -15,9 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Core/SlipIntelligence.Domain/SlipIntelligence.Domain.csproj" />
-    <ProjectReference Include="..\Core\SlipIntelligence.Application\SlipIntelligence.Application.csproj" />
-    <ProjectReference Include="..\Infrastructure\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj" />
+    <ProjectReference Include="..\SlipIntelligence.Application\SlipIntelligence.Application.csproj" />
+    <ProjectReference Include="..\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

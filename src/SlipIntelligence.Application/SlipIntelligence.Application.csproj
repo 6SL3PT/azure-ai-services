@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SlipIntelligence.Domain\SlipIntelligence.Domain.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj" />
+    <ProjectReference Include="..\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Contracts/SlipIntelligence/" />
   </ItemGroup>
 
 </Project>

@@ -5,25 +5,16 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6F576055-7A1B-442E-B5CE-D065B2731757}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Api", "src\API\SlipIntelligence.Api.csproj", "{8543C204-5E25-4E93-A15F-927A5B017B22}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Api", "src\SlipIntelligence.API\SlipIntelligence.Api.csproj", "{8543C204-5E25-4E93-A15F-927A5B017B22}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{ED05B90E-B72B-4B56-8428-57C664826530}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Application", "src\SlipIntelligence.Application\SlipIntelligence.Application.csproj", "{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Application", "src\Core\SlipIntelligence.Application\SlipIntelligence.Application.csproj", "{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Domain", "src\Core\SlipIntelligence.Domain\SlipIntelligence.Domain.csproj", "{93005398-A764-4908-84D3-C1106929365B}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{E4FC54A3-06AD-4AC0-BC09-0A28B82A4DE4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Infrastructure", "src\Infrastructure\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj", "{5E26CF4C-FA5A-4393-B628-1561DF0CA111}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Infrastructure", "src\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj", "{5E26CF4C-FA5A-4393-B628-1561DF0CA111}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{8543C204-5E25-4E93-A15F-927A5B017B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -34,21 +25,17 @@ Global
 		{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{93005398-A764-4908-84D3-C1106929365B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{93005398-A764-4908-84D3-C1106929365B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{93005398-A764-4908-84D3-C1106929365B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{93005398-A764-4908-84D3-C1106929365B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5E26CF4C-FA5A-4393-B628-1561DF0CA111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5E26CF4C-FA5A-4393-B628-1561DF0CA111}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E26CF4C-FA5A-4393-B628-1561DF0CA111}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E26CF4C-FA5A-4393-B628-1561DF0CA111}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8543C204-5E25-4E93-A15F-927A5B017B22} = {6F576055-7A1B-442E-B5CE-D065B2731757}
-		{ED05B90E-B72B-4B56-8428-57C664826530} = {6F576055-7A1B-442E-B5CE-D065B2731757}
-		{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2} = {ED05B90E-B72B-4B56-8428-57C664826530}
-		{93005398-A764-4908-84D3-C1106929365B} = {ED05B90E-B72B-4B56-8428-57C664826530}
-		{E4FC54A3-06AD-4AC0-BC09-0A28B82A4DE4} = {6F576055-7A1B-442E-B5CE-D065B2731757}
-		{5E26CF4C-FA5A-4393-B628-1561DF0CA111} = {E4FC54A3-06AD-4AC0-BC09-0A28B82A4DE4}
+		{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2} = {6F576055-7A1B-442E-B5CE-D065B2731757}
+		{5E26CF4C-FA5A-4393-B628-1561DF0CA111} = {6F576055-7A1B-442E-B5CE-D065B2731757}
 	EndGlobalSection
 EndGlobal
