@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-using SlipIntelligence.Application.Contracts.SlipIntelligence;
+using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Extensions;
-using SlipIntelligence.Application.Models.SlipIntelligence;
+using SlipIntelligence.Application.Models;
 
 namespace SlipIntelligence.Api.Controllers;
 
@@ -18,10 +18,23 @@ public class AzureDocumentController: ControllerBase {
     [HttpPost("base64")]
     public async Task<ActionResult<ResponseMessage<AnalyzeResultResponse>>> TextExtractFromBase64([FromBody] Base64Request request) {
         if(string.IsNullOrEmpty(request.Base64Document))
-            return BadRequest("No image provided.");
+            return BadRequest("No document provided.");
 
         try {
             var result = await azureDocumentService.AnalyzeDocumentBase64Async(request);
+            return Ok(result);
+        } catch(Exception ex) {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+
+    [HttpPost("bytes")]
+    public async Task<ActionResult<ResponseMessage<AnalyzeResultResponse>>> TextExtractFromBytes([FromBody] BytesRequest request) {
+        if(request.BytesDocument == null || request.BytesDocument.Length == 0)
+            return BadRequest("No document provided.");
+
+        try {
+            var result = await azureDocumentService.AnalyzeDocumentBytesAsync(request);
             return Ok(result);
         } catch(Exception ex) {
             return StatusCode(500, $"Internal server error: {ex.Message}");

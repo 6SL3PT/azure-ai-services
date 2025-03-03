@@ -1,9 +1,10 @@
 ﻿using SlipIntelligence.Application.Extensions;
-using SlipIntelligence.Application.Models.SlipIntelligence;
+using SlipIntelligence.Application.Models;
 
-namespace SlipIntelligence.Application.Contracts.SlipIntelligence;
+namespace SlipIntelligence.Application.Contracts;
 public interface IAzureDocumentService {
     Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBase64Async(Base64Request request);
+    Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBytesAsync(BytesRequest request);
     Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentUriAsync(UriRequest request);
     Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentAzureBlobAsync(AzureBlobRequest request);
 }

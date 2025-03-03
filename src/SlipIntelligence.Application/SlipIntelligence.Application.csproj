@@ -10,8 +10,4 @@
     <ProjectReference Include="..\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Contracts/SlipIntelligence/" />
-  </ItemGroup>
-
 </Project>

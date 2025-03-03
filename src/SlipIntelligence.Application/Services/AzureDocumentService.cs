@@ -1,6 +1,6 @@
-﻿using SlipIntelligence.Application.Contracts.SlipIntelligence;
+﻿using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Extensions;
-using SlipIntelligence.Application.Models.SlipIntelligence;
+using SlipIntelligence.Application.Models;
 using SlipIntelligence.Infrastructure.Interfaces;
 
 using System.Text.Json;
@@ -21,6 +21,29 @@ public class AzureDocumentService: IAzureDocumentService {
         var documentBytes = Convert.FromBase64String(request.Base64Document);
 
         using var stream = new MemoryStream(documentBytes);
+        var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
+
+        var fieldDict = response.Documents
+            .SelectMany(doc => doc.Fields)
+            .ToDictionary(
+                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
+                fieldKvp => new SlipFieldDto {
+                    Content = fieldKvp.Value.Content,
+                    Confidence = fieldKvp.Value.Confidence
+                }
+            );
+
+        return new ResponseMessage<AnalyzeResultResponse>(
+            new AnalyzeResultResponse {
+                ApiVersion = response.ServiceVersion,
+                ModelId = response.ModelId,
+                Content = response.Content,
+                Fields = fieldDict
+            });
+    }
+
+    public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBytesAsync(BytesRequest request) {
+        using var stream = new MemoryStream(request.BytesDocument);
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
 
         var fieldDict = response.Documents

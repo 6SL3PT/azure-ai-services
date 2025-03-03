@@ -1,5 +1,5 @@
 ﻿using SlipIntelligence.Api.Middlewares;
-using SlipIntelligence.Application.Contracts.SlipIntelligence;
+using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Services;
 using SlipIntelligence.Infrastructure.Interfaces;
 using SlipIntelligence.Infrastructure.Clients;
