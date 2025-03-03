@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
 using SlipIntelligence.Application.Interfaces;
 using SlipIntelligence.Domain;
 using SlipIntelligence.Infrastructure.Interfaces;
@@ -24,22 +25,46 @@ public class AzureDocumentService : IAzureDocumentService
         using var stream = new MemoryStream(documentBytes);
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
 
+        var slipFields = response.Documents
+            .SelectMany(doc => doc.Fields
+                .Select(fieldKvp => new SlipField
+                {
+                    Name = fieldKvp.Key,
+                    Content = fieldKvp.Value.Content,
+                    Confidence = fieldKvp.Value.Confidence
+                }))
+            .ToList();
+
         return new AnalyzeResultDto
         {
-            Status = "success",
-            AnalyzedText = response.Content
+            ApiVersion = response.ServiceVersion,
+            ModelId = response.ModelId,
+            Content = response.Content,
+            Fields = slipFields
         };
     }
 
     public async Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(UriRequest request)
     {
         var documentUri = new Uri(request.UriDocument);
-        var result = await _azureDocumentClient.AnalyzeDocumentUriAsync(documentUri);
+        var response = await _azureDocumentClient.AnalyzeDocumentUriAsync(documentUri);
+
+        var slipFields = response.Documents
+            .SelectMany(doc => doc.Fields
+                .Select(fieldKvp => new SlipField
+                {
+                    Name = fieldKvp.Key,
+                    Content = fieldKvp.Value.Content,
+                    Confidence = fieldKvp.Value.Confidence
+                }))
+            .ToList();
 
         return new AnalyzeResultDto
         {
-            Status = "success",
-            AnalyzedText = result.Content
+            ApiVersion = response.ServiceVersion,
+            ModelId = response.ModelId,
+            Content = response.Content,
+            Fields = slipFields
         };
     }
 
@@ -56,10 +81,22 @@ public class AzureDocumentService : IAzureDocumentService
 
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(memoryStream);
 
+        var slipFields = response.Documents
+            .SelectMany(doc => doc.Fields
+                .Select(fieldKvp => new SlipField
+                {
+                    Name = fieldKvp.Key,
+                    Content = fieldKvp.Value.Content,
+                    Confidence = fieldKvp.Value.Confidence
+                }))
+            .ToList();
+
         return new AnalyzeResultDto
         {
-            Status = "success",
-            AnalyzedText = response.Content
+            ApiVersion = response.ServiceVersion,
+            ModelId = response.ModelId,
+            Content = response.Content,
+            Fields = slipFields
         };
     }
 }
