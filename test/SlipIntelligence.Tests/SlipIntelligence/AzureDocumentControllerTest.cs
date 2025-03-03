@@ -112,8 +112,13 @@ public class AzureDocumentControllerTest {
         // Arrange
         var modelId = "test-model-id";
 
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(_ => _.Length).Returns(0);
+        mockFile.Setup(_ => _.FileName).Returns("fakefile.txt");
+        mockFile.Setup(_ => _.OpenReadStream()).Returns(Stream.Null);
+
         // Act
-        var result = await _azureDocumentController.TextExtractFromBytes(modelId, null);
+        var result = await _azureDocumentController.TextExtractFromBytes(modelId, mockFile.Object);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);

@@ -24,7 +24,7 @@
                     case 1000:
                         return $"Success.{CustomMessage}";
                     case 4001:
-                        return $"Business error with  1 errors.{CustomMessage}";
+                        return $"Business error with 1 errors.{CustomMessage}";
                     case 4002:
                         return $"Business error with more than 1 errors.{CustomMessage}";
                     default:
