@@ -1,6 +1,6 @@
 version = 1
 
-test_patterns = ["test/SlipIntelligence.Tests/**"]
+test_patterns = ["SlipIntelligence.Tests/**"]
 
 [[analyzers]]
 name = "test-coverage"
