@@ -4,12 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6F576055-7A1B-442E-B5CE-D065B2731757}"
+	ProjectSection(SolutionItems) = preProject
+		src\Dockerfile = src\Dockerfile
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Api", "src\SlipIntelligence.API\SlipIntelligence.Api.csproj", "{8543C204-5E25-4E93-A15F-927A5B017B22}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SlipIntelligence.Api", "src\SlipIntelligence.API\SlipIntelligence.Api.csproj", "{8543C204-5E25-4E93-A15F-927A5B017B22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Application", "src\SlipIntelligence.Application\SlipIntelligence.Application.csproj", "{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SlipIntelligence.Application", "src\SlipIntelligence.Application\SlipIntelligence.Application.csproj", "{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlipIntelligence.Infrastructure", "src\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj", "{5E26CF4C-FA5A-4393-B628-1561DF0CA111}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SlipIntelligence.Infrastructure", "src\SlipIntelligence.Infrastructure\SlipIntelligence.Infrastructure.csproj", "{5E26CF4C-FA5A-4393-B628-1561DF0CA111}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,5 +40,8 @@ Global
 		{8543C204-5E25-4E93-A15F-927A5B017B22} = {6F576055-7A1B-442E-B5CE-D065B2731757}
 		{228F351A-ADD8-48DD-B4E3-DFF8E079A7E2} = {6F576055-7A1B-442E-B5CE-D065B2731757}
 		{5E26CF4C-FA5A-4393-B628-1561DF0CA111} = {6F576055-7A1B-442E-B5CE-D065B2731757}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9ED3B208-4968-46E1-9158-8E1478DA2878}
 	EndGlobalSection
 EndGlobal
