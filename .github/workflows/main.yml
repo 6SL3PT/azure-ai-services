@@ -2,10 +2,10 @@ name: Build, Test and Analyze
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
       - develop
       - 'release/**'
       - 'hotfix/v**'
