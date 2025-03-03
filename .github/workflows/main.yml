@@ -48,7 +48,7 @@ jobs:
 
     - name: Build
       continue-on-error: true
-      run: dotnet build ./GofiveSubscription.sln --configuration ${{ env.CONFIGURATION }} --verbosity quiet --nologo  
+      run: dotnet build ./SlipIntelligence.sln --configuration ${{ env.CONFIGURATION }} --verbosity quiet --nologo  
     
     - name: Test
       continue-on-error: true
