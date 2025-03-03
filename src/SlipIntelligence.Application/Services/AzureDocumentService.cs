@@ -54,7 +54,7 @@ public class AzureDocumentService: IAzureDocumentService {
     }
 
     public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentAzureBlobAsync(AzureBlobRequest request, string modelId) {
-        Stream blobStream;
+        Stream? blobStream;
         try {
             blobStream = await _azureBlobClient.GetBlobStreamAsync(request.ContainerName, request.BlobName);
         } catch(RequestFailedException ex) {
@@ -62,9 +62,17 @@ public class AzureDocumentService: IAzureDocumentService {
                 new AnalyzeResultResponse() {
                     Success = false,
                     ModelId = modelId,
-                    Content = ex.Message ?? "Error while fetching blob from Azure Blob Storage"
+                    Content = ex.Message ?? "RequestFailedException: Error while fetching blob from Azure Blob Storage"
+                });
+        } catch(Exception ex) {
+            return new ResponseMessage<AnalyzeResultResponse>(
+                new AnalyzeResultResponse() {
+                    Success = false,
+                    ModelId = modelId,
+                    Content = ex.Message ?? "Exception: Error while fetching blob from Azure Blob Storage"
                 });
         }
+
         // Azure Document Intelligence requires the stream to be seekable
         // These command will convert non-seekable stream into seekable stream
         // by copy the non-seekable stream to a MemoryStream which is seekable

@@ -166,7 +166,7 @@ public class AzureDocumentControllerTest {
     public async Task TextExtractFromUri_ValidRequest_ReturnsOkResult() {
         // Arrange
         var modelId = "test-model-id";
-        var request = new UriRequest { UriDocument = "http://example.com/document" };
+        var request = new UriRequest { UriDocument = "https://example.com/document" };
         var expectedResponse = CreateAnalyzeResultResponse();
 
         _mockService.Setup(s => s.AnalyzeDocumentUriAsync(request, modelId))
@@ -198,7 +198,7 @@ public class AzureDocumentControllerTest {
     public async Task TextExtractFromUri_InternalServerError_Returns500() {
         // Arrange
         var modelId = "test-model-id";
-        var request = new UriRequest { UriDocument = "http://example.com/document" };
+        var request = new UriRequest { UriDocument = "https://example.com/document" };
         _mockService.Setup(s => s.AnalyzeDocumentUriAsync(request, modelId))
             .ThrowsAsync(new Exception("Internal error"));
 

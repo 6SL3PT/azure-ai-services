@@ -120,7 +120,7 @@ public class AzureDocumentServiceTest {
     public async Task AnalyzeDocumentUriAsync_ShouldReturnSuccessResponse_WhenAnalysisIsSuccessful() {
         // Arrange
         var modelId = "test-model-id";
-        var request = new UriRequest { UriDocument = "http://example.com/document" };
+        var request = new UriRequest { UriDocument = "https://example.com/document" };
 
         SetupDocumentClientMockForUri(_mockDocumentClient, modelId);
 
@@ -142,7 +142,7 @@ public class AzureDocumentServiceTest {
     public async Task AnalyzeDocumentUriAsync_ShouldReturnErrorResponse_WhenRequestFailedExceptionIsThrown() {
         // Arrange
         var modelId = "test-model-id";
-        var request = new UriRequest { UriDocument = "http://example.com/document" };
+        var request = new UriRequest { UriDocument = "https://example.com/document" };
 
         _mockDocumentClient.Setup(client => client.AnalyzeDocumentUriAsync(It.IsAny<Uri>(), modelId))
             .ThrowsAsync(new RequestFailedException("Error message"));
@@ -159,7 +159,7 @@ public class AzureDocumentServiceTest {
     }
 
     [Fact]
-    public async Task AnalyzeDocumentAzureBlobAsync_ShouldReturnErrorResponse_WhenBlobFetchFails() {
+    public async Task AnalyzeDocumentAzureBlobAsync_ShouldReturnErrorResponse_WhenGetBlobStreamThrowsRequestFailedException() {
         // Arrange
         var request = new AzureBlobRequest { ContainerName = "test-container", BlobName = "test-blob" };
         var modelId = "test-model-id";
@@ -167,6 +167,28 @@ public class AzureDocumentServiceTest {
         string expectedErrorMessage = "Blob fetch error";
         _mockBlobClient.Setup(client => client.GetBlobStreamAsync(request.ContainerName, request.BlobName))
             .ThrowsAsync(new RequestFailedException(expectedErrorMessage));
+
+        // Act
+        var result = await _service.AnalyzeDocumentAzureBlobAsync(request, modelId);
+
+        // Assert
+        Assert.IsType<ResponseMessage<AnalyzeResultResponse>>(result);
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains(expectedErrorMessage, response.Content);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentAzureBlobAsync_ShouldReturnErrorResponse_WhenGetBlobStreamThrowsException() {
+        // Arrange
+        var request = new AzureBlobRequest { ContainerName = "test-container", BlobName = "test-blob" };
+        var modelId = "test-model-id";
+
+        string expectedErrorMessage = "Blob fetch error";
+        _mockBlobClient.Setup(client => client.GetBlobStreamAsync(request.ContainerName, request.BlobName))
+            .ThrowsAsync(new Exception(expectedErrorMessage));
 
         // Act
         var result = await _service.AnalyzeDocumentAzureBlobAsync(request, modelId);
@@ -245,7 +267,7 @@ public class AzureDocumentServiceTest {
 
 
     [Fact]
-    public async void ConvertAnalyzeResultToResponse_ShouldReturnErrorResponse_WhenNoDocumentsFound() {
+    public async Task ConvertAnalyzeResultToResponse_ShouldReturnErrorResponse_WhenNoDocumentsFound() {
         // Arrange
         var base64Document = Convert.ToBase64String(new byte[] { 0, 1, 2 });
         var request = new Base64Request { Base64Document = base64Document };
@@ -271,7 +293,7 @@ public class AzureDocumentServiceTest {
     }
 
     [Fact]
-    public async void ConvertAnalyzeResultToResponse_ShouldReturnErrorResponse_WhenNoDocumentsIsNull() {
+    public async Task ConvertAnalyzeResultToResponse_ShouldReturnErrorResponse_WhenNoDocumentsIsNull() {
         // Arrange
         var base64Document = Convert.ToBase64String(new byte[] { 0, 1, 2 });
         var request = new Base64Request { Base64Document = base64Document };
