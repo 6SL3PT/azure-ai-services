@@ -1,0 +1,90 @@
+name: Build, Test and Analyze
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - develop
+      - 'release/**'
+      - 'hotfix/v**'
+  workflow_dispatch:
+env:
+  CONFIGURATION: Release
+  DOTNET_NOLOGO: true
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 0 # disable shallow clone.
+      
+    - name: Setup .NET Core SDK 8.0.x
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Setup latest Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin' # See 'Supported distributions' for available options
+        java-version: ${{ vars.JAVA_LATEST_VERSION }}
+    
+    - name: Install global tool
+      run: | 
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-nuget-client-portal-api-${{ hashFiles('**/projectfiles.tar', '**/*.csproj') }}
+
+    - name: Restore
+      run: dotnet restore -v q
+
+    - name: Build
+      continue-on-error: true
+      run: dotnet build ./GofiveSubscription.sln --configuration ${{ env.CONFIGURATION }} --verbosity quiet --nologo  
+    
+    - name: Test
+      continue-on-error: true
+      run: dotnet test --configuration ${{ env.CONFIGURATION }} --collect:"XPlat Code Coverage" --logger trx --settings coverlet.runsettings --no-build -- xunit.parallelizeAssembly=true --verbosity quiet
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        trx_files: "**/TestResults/*.trx"
+
+    - name: Merge code coverage
+      run: reportgenerator -reports:**/TestResults/*/coverage.cobertura.xml -targetDir:TestResults -reporttypes:Cobertura
+
+    - name: DeepSource Test Coverage Action
+      # You may pin to the exact commit or the version.
+      # uses: deepsourcelabs/test-coverage-action@e02a039827236fa21a95866e7cd0b1c52ca61e76
+      uses: deepsourcelabs/test-coverage-action@v1.1.2
+      with:
+        # Programming language shortcode for which coverage is reported. Allowed values are — python, go, javascript, ruby, java, kotlin, scala, php, csharp, cxx, rust, swift
+        key: csharp
+        # Path to the coverage data file. e.g. ./coverage.xml
+        coverage-file: ./TestResults/Cobertura.xml
+        # DeepSource DSN of this repository. It is available under Settings → Reporting tab of the repository page on DeepSource.
+        dsn: ${{ secrets.DEEPSOURCE_DSN }}
+        # Should the CI build fail if there is an error while uploading the report to DeepSource? Allowed values are — true, false
+        # fail-ci-on-error: # optional
+        # HEAD commit for which the Test Coverage report is being sent
+        # commit-sha: # optional, default is ${{ github.event.pull_request.head.sha }}
+              
+      
+        # - name: Report results to DeepSource
+        #   run: |
+        #       # Tests have finished and a test coverage report is available
+        #       # Install deepsource CLI
+        #       curl https://deepsource.io/cli | sh
+        #       # From the root directory, run the report coverage command
+        #       ./bin/deepsource report --analyzer test-coverage --key csharp --value-file ./TestResults/coverage.cobertura.xml
+        #   env:
+        #     DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}
