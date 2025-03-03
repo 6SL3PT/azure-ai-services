@@ -1,4 +1,6 @@
-﻿using SlipIntelligence.Application.Contracts;
+﻿using Microsoft.AspNetCore.Http;
+
+using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Extensions;
 using SlipIntelligence.Application.Models;
 using SlipIntelligence.Infrastructure.Interfaces;
@@ -42,19 +44,19 @@ public class AzureDocumentService: IAzureDocumentService {
             });
     }
 
-    public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBytesAsync(BytesRequest request) {
-        using var stream = new MemoryStream(request.BytesDocument);
-        var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
+    public async Task<ResponseMessage<AnalyzeResultResponse>> AnalyzeDocumentBytesAsync(IFormFile document) {
+        using var documentStream = document.OpenReadStream();
+        var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(documentStream);
 
         var fieldDict = response.Documents
-            .SelectMany(doc => doc.Fields)
-            .ToDictionary(
-                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
-                fieldKvp => new SlipFieldDto {
-                    Content = fieldKvp.Value.Content,
-                    Confidence = fieldKvp.Value.Confidence
-                }
-            );
+        .SelectMany(doc => doc.Fields)
+        .ToDictionary(
+            fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
+            fieldKvp => new SlipFieldDto {
+                Content = fieldKvp.Value.Content,
+                Confidence = fieldKvp.Value.Confidence
+            }
+        );
 
         return new ResponseMessage<AnalyzeResultResponse>(
             new AnalyzeResultResponse {

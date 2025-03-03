@@ -13,7 +13,7 @@
 
 - `<YOUR_URL>:<PORT>/api/AzureDocument/base64`: Send document via base64
 
-  Body:
+  Body `raw`:
 
   ```
   {
@@ -21,9 +21,19 @@
   }
   ```
 
+- `<YOUR_URL>:<PORT>/api/AzureDocument/bytes`: Send document via byte array
+
+  Body `form-data`:
+
+  ```
+  {
+     "document": "<YOUR_FILE>"
+  }
+  ```
+
 - `<YOUR_URL>:<PORT>/api/AzureDocument/uri`: Send document via URI
 
-  Body:
+  Body `raw`:
 
   ```
   {
@@ -33,7 +43,7 @@
 
 - `<YOUR_URL>:<PORT>/api/AzureDocument/azure-blob`: Send document via Azure Blob object
 
-  Body:
+  Body `raw`:
 
   ```
   {

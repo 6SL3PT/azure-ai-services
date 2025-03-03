@@ -29,12 +29,12 @@ public class AzureDocumentController: ControllerBase {
     }
 
     [HttpPost("bytes")]
-    public async Task<ActionResult<ResponseMessage<AnalyzeResultResponse>>> TextExtractFromBytes([FromBody] BytesRequest request) {
-        if(request.BytesDocument == null || request.BytesDocument.Length == 0)
+    public async Task<ActionResult<ResponseMessage<AnalyzeResultResponse>>> TextExtractFromBytes(IFormFile document) {
+        if(document == null || document.Length == 0)
             return BadRequest("No document provided.");
 
         try {
-            var result = await azureDocumentService.AnalyzeDocumentBytesAsync(request);
+            var result = await azureDocumentService.AnalyzeDocumentBytesAsync(document);
             return Ok(result);
         } catch(Exception ex) {
             return StatusCode(500, $"Internal server error: {ex.Message}");
