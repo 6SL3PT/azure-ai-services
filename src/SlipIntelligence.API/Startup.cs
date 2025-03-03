@@ -2,7 +2,7 @@
 using SlipIntelligence.Application.Contracts.SlipIntelligence;
 using SlipIntelligence.Application.Services;
 using SlipIntelligence.Infrastructure.Interfaces;
-using SlipIntelligence.Infrastructure.Implementations;
+using SlipIntelligence.Infrastructure.Clients;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
