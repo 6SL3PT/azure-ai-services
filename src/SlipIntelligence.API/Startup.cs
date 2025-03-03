@@ -7,6 +7,8 @@ using SlipIntelligence.Application.Contracts;
 using SlipIntelligence.Application.Services;
 using SlipIntelligence.Infrastructure.Interfaces;
 using SlipIntelligence.Infrastructure.Clients;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
 
 namespace SlipIntelligence.API;
 public class Startup {
@@ -42,6 +44,7 @@ public class Startup {
         services.AddSwaggerGen(c => {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "Slip Processing WebAPI", Version = "v1" });
         });
+        services.AddHealthChecks();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
@@ -52,7 +55,17 @@ public class Startup {
             app.UseHsts();
         }
 
-        app.UseHttpsRedirection();
+        app.UseHealthChecks("/hc", new HealthCheckOptions {
+            Predicate = _ => true,
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
+        app.UseHealthChecks("/liveness", new HealthCheckOptions {
+            Predicate = (reg) => reg.Tags?.Contains("app") is true,
+        });
+
+        app.UseHealthChecks("/ready", new HealthCheckOptions {
+            Predicate = r => r.Tags?.Contains("app") == true
+        });
         app.UseRouting();
 
         app.UseMiddleware<SimpleAuthenticationMiddleware>(Configuration);
