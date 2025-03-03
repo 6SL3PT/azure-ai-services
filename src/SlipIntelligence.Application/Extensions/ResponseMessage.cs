@@ -43,7 +43,7 @@
             SubCode = $"E{code}";
             Description = code switch {
                 1101 => $"Missing required parameters.{customMessage}",
-                1102 => $"Invalid parameters enterd.{customMessage}",
+                1102 => $"Invalid parameters entered.{customMessage}",
                 1103 => $"Empty string input not supported.{customMessage}",
                 1104 => $"Requested entity record does not exist.{customMessage}",
                 1105 => $"Unrecognized field name was entered - Please check spelling and/or refer to the API docs for correct name.{customMessage}",

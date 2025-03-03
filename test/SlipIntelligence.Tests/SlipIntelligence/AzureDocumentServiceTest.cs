@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 using Moq;
 
+using SlipIntelligence.Application.Extensions;
 using SlipIntelligence.Application.Models;
 using SlipIntelligence.Application.Services;
 using SlipIntelligence.Infrastructure.Interfaces;
@@ -171,6 +172,7 @@ public class AzureDocumentServiceTest {
         var result = await _service.AnalyzeDocumentAzureBlobAsync(request, modelId);
 
         // Assert
+        Assert.IsType<ResponseMessage<AnalyzeResultResponse>>(result);
         Assert.Equal(1000, result.Status.Code);
         var response = result.Data as AnalyzeResultResponse;
         Assert.NotNull(response);
@@ -252,6 +254,32 @@ public class AzureDocumentServiceTest {
 
         // Create a response with no documents
         var analyzeResult = DocumentAnalysisModelFactory.AnalyzeResult(modelId, documents: [], serviceVersion: serviceVersion);
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ReturnsAsync(analyzeResult);
+
+        // Act
+        var result = await _service.AnalyzeDocumentBase64Async(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal(modelId, response.ModelId);
+        Assert.Equal("Model did not found any document.", response.Content);
+        Assert.Equal(serviceVersion, response.ApiVersion);
+    }
+
+    [Fact]
+    public async void ConvertAnalyzeResultToResponse_ShouldReturnErrorResponse_WhenNoDocumentsIsNull() {
+        // Arrange
+        var base64Document = Convert.ToBase64String(new byte[] { 0, 1, 2 });
+        var request = new Base64Request { Base64Document = base64Document };
+        var modelId = "test-model-id";
+        var serviceVersion = "1.0";
+
+        // Create a response with no documents
+        var analyzeResult = DocumentAnalysisModelFactory.AnalyzeResult(modelId, documents: null, serviceVersion: serviceVersion);
         _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
             .ReturnsAsync(analyzeResult);
 
