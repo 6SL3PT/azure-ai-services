@@ -1,5 +1,7 @@
 # Slip Intelligence
 
+<img src="img/Diagram.png" />
+
 ## Port
 
 - HTTP: `5202`
@@ -11,7 +13,7 @@
 
 ## API Directory
 
-- `<YOUR_URL>:<PORT>/api/AzureDocument/base64`: Send document via base64
+- `<YOUR_URL>:<PORT>/api/AzureDocument/base64/<YOUR_MODEL_ID>`: Send document via base64
 
   Body `raw`:
 
@@ -21,7 +23,7 @@
   }
   ```
 
-- `<YOUR_URL>:<PORT>/api/AzureDocument/bytes`: Send document via byte array
+- `<YOUR_URL>:<PORT>/api/AzureDocument/bytes/<YOUR_MODEL_ID>`: Send document via byte array
 
   Body `form-data`:
 
@@ -31,7 +33,7 @@
   }
   ```
 
-- `<YOUR_URL>:<PORT>/api/AzureDocument/uri`: Send document via URI
+- `<YOUR_URL>:<PORT>/api/AzureDocument/uri/<YOUR_MODEL_ID>`: Send document via URI
 
   Body `raw`:
 
@@ -41,7 +43,7 @@
   }
   ```
 
-- `<YOUR_URL>:<PORT>/api/AzureDocument/azure-blob`: Send document via Azure Blob object
+- `<YOUR_URL>:<PORT>/api/AzureDocument/azure-blob/<YOUR_MODEL_ID>`: Send document via Azure Blob object
 
   Body `raw`:
 
@@ -61,6 +63,7 @@
         "description": "Success."
     },
     "data": {
+        "success": true,
         "apiVersion": "2023-07-31",
         "modelId": "slip-intelligence-002",
         "content": "...",
@@ -77,6 +80,7 @@
 
 **Description**
 
+- `success`: `bool`, Indicate if service can connect to Azure or able to extract data or not
 - `apiVersion`: `str`, Azure Document Intelligence model's API Version
 - `modelId`: `str`, ID of Azure Document Intelligence model
 - `content`: `str`, All of the string in document that model can extract
