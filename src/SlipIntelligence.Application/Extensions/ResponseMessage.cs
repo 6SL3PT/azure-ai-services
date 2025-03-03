@@ -41,33 +41,16 @@
         public ErrorMessage(int code, string customMessage = "") {
             MetaData = new Dictionary<string, object>();
             SubCode = $"E{code}";
-            switch(code) {
-                case 1101:
-                    Description = $"Missing required parameters.{customMessage}";
-                    break;
-                case 1102:
-                    Description = $"Invalid parameters enterd.{customMessage}";
-                    break;
-                case 1103:
-                    Description = $"Empty string input not supported.{customMessage}";
-                    break;
-                case 1104:
-                    Description = $"Requested entity record does not exist.{customMessage}";
-                    break;
-                case 1105:
-                    Description = $"Unrecognized field name was entered - Please check spelling and/or refer to the API docs for correct name.{customMessage}";
-                    break;
-                case 1111:
-                    Description = $"ข้อมูลซ้ำกับที่มีอยู่แล้ว ไม่สามารถ Insert หรือ Update ได้\r\nData entry duplicated with existing.{customMessage}";
-                    break;
-                case 9102:
-                    Description = $"Missing required authorization credentials.{customMessage}";
-                    break;
-                default:
-                    Description = string.Empty;
-                    break;
-
-            }
+            Description = code switch {
+                1101 => $"Missing required parameters.{customMessage}",
+                1102 => $"Invalid parameters enterd.{customMessage}",
+                1103 => $"Empty string input not supported.{customMessage}",
+                1104 => $"Requested entity record does not exist.{customMessage}",
+                1105 => $"Unrecognized field name was entered - Please check spelling and/or refer to the API docs for correct name.{customMessage}",
+                1111 => $"ข้อมูลซ้ำกับที่มีอยู่แล้ว ไม่สามารถ Insert หรือ Update ได้\r\nData entry duplicated with existing.{customMessage}",
+                9102 => $"Missing required authorization credentials.{customMessage}",
+                _ => string.Empty,
+            };
         }
     }
 }

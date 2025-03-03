@@ -1,57 +1,274 @@
 using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
-using Azure.Storage.Blobs;
+
+using Microsoft.AspNetCore.Http;
 
 using Moq;
 
-using SlipIntelligence.Application.Extensions;
 using SlipIntelligence.Application.Models;
 using SlipIntelligence.Application.Services;
-using SlipIntelligence.Infrastructure.Clients;
+using SlipIntelligence.Infrastructure.Interfaces;
 
 using System.Drawing;
-
-using Xunit;
+using System.Text;
 
 namespace SlipIntelligence.Tests.SlipIntelligence;
 public class AzureDocumentServiceTest {
-    private readonly Mock<DocumentAnalysisClient> _mockAnalysisClient;
-    private readonly Mock<BlobServiceClient> _mockBlobServiceClient;
+    private readonly Mock<IAzureDocumentClient> _mockDocumentClient;
+    private readonly Mock<IAzureBlobClient> _mockBlobClient;
+    private readonly AzureDocumentService _service;
+
     public AzureDocumentServiceTest() {
-        _mockAnalysisClient = new Mock<DocumentAnalysisClient>();
-        _mockBlobServiceClient = new Mock<BlobServiceClient>();
+        _mockDocumentClient = new Mock<IAzureDocumentClient>();
+        _mockBlobClient = new Mock<IAzureBlobClient>();
+        _service = new AzureDocumentService(_mockDocumentClient.Object, _mockBlobClient.Object);
     }
 
     [Fact]
-    public async Task AnalyzeDocumentBase64Async_ReturnsExpectedResponse() {
+    public async Task AnalyzeDocumentBase64Async_ShouldReturnSuccessResponse_WhenAnalysisIsSuccessful() {
         // Arrange
-        string fakeModelId = Guid.NewGuid().ToString();
-        Base64Request fakeRequest = new() { Base64Document = "test" };
+        var base64Document = Convert.ToBase64String(new byte[] { 0, 1, 2 });
+        var request = new Base64Request { Base64Document = base64Document };
+        var modelId = "test-model-id";
 
-        Mock<AnalyzeDocumentOperation> mockOperation = new();
-        SetupDocumentOperation(mockOperation, fakeModelId);
-        _mockAnalysisClient.Setup(client => client.AnalyzeDocumentAsync(
-                WaitUntil.Completed,
-                fakeModelId,
-                It.IsAny<Stream>(),
-                It.IsAny<AnalyzeDocumentOptions>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(mockOperation.Object));
-
-        AzureDocumentService azureDocumentService = new(
-            new AzureDocumentClient(_mockAnalysisClient.Object),
-            new AzureBlobClient(_mockBlobServiceClient.Object));
+        SetupDocumentClientMockForStream(_mockDocumentClient, modelId);
 
         // Act
-        var response = await azureDocumentService.AnalyzeDocumentBase64Async(fakeRequest, fakeModelId);
+        var result = await _service.AnalyzeDocumentBase64Async(request, modelId);
 
         // Assert
+        Assert.Equal(1000, result.Status.Code);
+
+        var response = result.Data as AnalyzeResultResponse;
         Assert.NotNull(response);
-        Assert.IsType<ResponseMessage<AnalyzeResultResponse>>(response);
-        Console.WriteLine(response.Data.ToString());
+        Assert.True(response.Success);
+        Assert.Equal(modelId, response.ModelId);
+        Assert.Single(response.Fields);
+        Assert.Equal("150.00", response.Fields["amount"].Content);
+        Assert.Equal(0.85f, response.Fields["amount"].Confidence);
     }
 
-    private static void SetupDocumentOperation(Mock<AnalyzeDocumentOperation> mockOperation, string fakeModelId) {
+    [Fact]
+    public async Task AnalyzeDocumentBase64Async_ShouldReturnErrorResponse_WhenRequestFailedExceptionIsThrown() {
+        // Arrange
+        var base64Document = Convert.ToBase64String(new byte[] { 0, 1, 2 });
+        var request = new Base64Request { Base64Document = base64Document };
+        var modelId = "test-model-id";
+
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ThrowsAsync(new RequestFailedException("Error message"));
+
+        // Act
+        var result = await _service.AnalyzeDocumentBase64Async(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal("Error while sending request to Azure Document Intelligence", response.Content);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentBytesAsync_ShouldReturnSuccessResponse_WhenAnalysisIsSuccessful() {
+        // Arrange
+        var modelId = "test-model-id";
+        var formFileMock = new Mock<IFormFile>();
+        var memoryStream = new MemoryStream(new byte[] { 0, 1, 2 });
+        formFileMock.Setup(f => f.OpenReadStream()).Returns(memoryStream);
+
+        SetupDocumentClientMockForStream(_mockDocumentClient, modelId);
+
+        // Act
+        var result = await _service.AnalyzeDocumentBytesAsync(formFileMock.Object, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(modelId, response.ModelId);
+        Assert.Single(response.Fields);
+        Assert.Equal("150.00", response.Fields["amount"].Content);
+        Assert.Equal(0.85f, response.Fields["amount"].Confidence);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentBytesAsync_ShouldReturnErrorResponse_WhenRequestFailedExceptionIsThrown() {
+        // Arrange
+        var modelId = "test-model-id";
+        var formFileMock = new Mock<IFormFile>();
+        var memoryStream = new MemoryStream(new byte[] { 0, 1, 2 });
+        formFileMock.Setup(f => f.OpenReadStream()).Returns(memoryStream);
+
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ThrowsAsync(new RequestFailedException("Error message"));
+
+        // Act
+        var result = await _service.AnalyzeDocumentBytesAsync(formFileMock.Object, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal("Error while sending request to Azure Document Intelligence", response.Content);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentUriAsync_ShouldReturnSuccessResponse_WhenAnalysisIsSuccessful() {
+        // Arrange
+        var modelId = "test-model-id";
+        var request = new UriRequest { UriDocument = "http://example.com/document" };
+
+        SetupDocumentClientMockForUri(_mockDocumentClient, modelId);
+
+        // Act
+        var result = await _service.AnalyzeDocumentUriAsync(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(modelId, response.ModelId);
+        Assert.Single(response.Fields);
+        Assert.Equal("150.00", response.Fields["amount"].Content);
+        Assert.Equal(0.85f, response.Fields["amount"].Confidence);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentUriAsync_ShouldReturnErrorResponse_WhenRequestFailedExceptionIsThrown() {
+        // Arrange
+        var modelId = "test-model-id";
+        var request = new UriRequest { UriDocument = "http://example.com/document" };
+
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentUriAsync(It.IsAny<Uri>(), modelId))
+            .ThrowsAsync(new RequestFailedException("Error message"));
+
+        // Act
+        var result = await _service.AnalyzeDocumentUriAsync(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal("Error while sending request to Azure Document Intelligence", response.Content);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentAzureBlobAsync_ShouldReturnErrorResponse_WhenBlobFetchFails() {
+        // Arrange
+        var request = new AzureBlobRequest { ContainerName = "test-container", BlobName = "test-blob" };
+        var modelId = "test-model-id";
+
+        string expectedErrorMessage = "Blob fetch error";
+        _mockBlobClient.Setup(client => client.GetBlobStreamAsync(request.ContainerName, request.BlobName))
+            .ThrowsAsync(new RequestFailedException(expectedErrorMessage));
+
+        // Act
+        var result = await _service.AnalyzeDocumentAzureBlobAsync(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains(expectedErrorMessage, response.Content);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentAzureBlobAsync_ShouldReturnSuccessResponse_WhenBlobStreamIsProcessedSuccessfully() {
+        // Arrange
+        var modelId = "test-model-id";
+        var request = new AzureBlobRequest {
+            ContainerName = "test-container",
+            BlobName = "test-blob"
+        };
+
+        // Mock the blob stream to return a valid stream
+        var mockBlobStream = new MemoryStream(Encoding.UTF8.GetBytes("sample document content"));
+        _mockBlobClient.Setup(client => client.GetBlobStreamAsync(request.ContainerName, request.BlobName))
+            .ReturnsAsync(mockBlobStream);
+
+        // Mock the document client to return a successful AnalyzeResult
+        var analyzeResult = CreateAnalyzeResult(modelId);
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ReturnsAsync(analyzeResult);
+
+        // Act
+        var result = await _service.AnalyzeDocumentAzureBlobAsync(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(modelId, response.ModelId);
+        Assert.Single(response.Fields);
+        Assert.Equal("150.00", response.Fields["amount"].Content);
+        Assert.Equal(0.85f, response.Fields["amount"].Confidence);
+    }
+
+    [Fact]
+    public async Task AnalyzeDocumentAzureBlobAsync_ShouldReturnErrorResponse_WhenBlobStreamProcessedFailed() {
+        // Arrange
+        var modelId = "test-model-id";
+        var request = new AzureBlobRequest {
+            ContainerName = "test-container",
+            BlobName = "test-blob"
+        };
+
+        // Mock the blob stream to return a valid stream
+        var mockBlobStream = new MemoryStream(Encoding.UTF8.GetBytes("sample document content"));
+        _mockBlobClient.Setup(client => client.GetBlobStreamAsync(request.ContainerName, request.BlobName))
+            .ReturnsAsync(mockBlobStream);
+
+        // Mock the document client to throw Exception
+        var analyzeResult = CreateAnalyzeResult(modelId);
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ThrowsAsync(new RequestFailedException("Error message"));
+
+        // Act
+        var result = await _service.AnalyzeDocumentAzureBlobAsync(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("Error while sending request to Azure Document Intelligence", response.Content);
+    }
+
+
+    [Fact]
+    public async void ConvertAnalyzeResultToResponse_ShouldReturnErrorResponse_WhenNoDocumentsFound() {
+        // Arrange
+        var base64Document = Convert.ToBase64String(new byte[] { 0, 1, 2 });
+        var request = new Base64Request { Base64Document = base64Document };
+        var modelId = "test-model-id";
+        var serviceVersion = "1.0";
+
+        // Create a response with no documents
+        var analyzeResult = DocumentAnalysisModelFactory.AnalyzeResult(modelId, documents: [], serviceVersion: serviceVersion);
+        _mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ReturnsAsync(analyzeResult);
+
+        // Act
+        var result = await _service.AnalyzeDocumentBase64Async(request, modelId);
+
+        // Assert
+        Assert.Equal(1000, result.Status.Code);
+        var response = result.Data as AnalyzeResultResponse;
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal(modelId, response.ModelId);
+        Assert.Equal("Model did not found any document.", response.Content);
+        Assert.Equal(serviceVersion, response.ApiVersion);
+    }
+
+    private static AnalyzeResult CreateAnalyzeResult(string fakeModelId) {
         var fieldValue = DocumentAnalysisModelFactory.DocumentFieldValueWithDoubleFieldType(150.0);
 
         var fieldPolygon = new List<PointF>() {
@@ -82,8 +299,18 @@ public class AzureDocumentServiceTest {
         var document = DocumentAnalysisModelFactory.AnalyzedDocument($"custom:{fakeModelId}", documentRegions, documentSpans, fields, 0.95f);
         var documents = new List<AnalyzedDocument>() { document };
 
-        var result = DocumentAnalysisModelFactory.AnalyzeResult(fakeModelId, documents: documents);
+        return DocumentAnalysisModelFactory.AnalyzeResult(fakeModelId, documents: documents);
+    }
 
-        mockOperation.SetupGet(op => op.Value).Returns(result);
+    private static void SetupDocumentClientMockForUri(Mock<IAzureDocumentClient> mockDocumentClient, string modelId) {
+        var analyzeResult = CreateAnalyzeResult(modelId);
+        mockDocumentClient.Setup(client => client.AnalyzeDocumentUriAsync(It.IsAny<Uri>(), modelId))
+            .ReturnsAsync(analyzeResult);
+    }
+
+    private static void SetupDocumentClientMockForStream(Mock<IAzureDocumentClient> mockDocumentClient, string modelId) {
+        var analyzeResult = CreateAnalyzeResult(modelId);
+        mockDocumentClient.Setup(client => client.AnalyzeDocumentStreamAsync(It.IsAny<Stream>(), modelId))
+            .ReturnsAsync(analyzeResult);
     }
 }

@@ -62,9 +62,7 @@ public class AzureDocumentService: IAzureDocumentService {
                 new AnalyzeResultResponse() {
                     Success = false,
                     ModelId = modelId,
-                    Content = ex.ErrorCode == null && ex.Message == null
-                        ? "Error while fetching blob from Azure Blob Storage"
-                        : $"{ex.ErrorCode}"
+                    Content = ex.Message ?? "Error while fetching blob from Azure Blob Storage"
                 });
         }
         // Azure Document Intelligence requires the stream to be seekable
