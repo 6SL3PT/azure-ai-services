@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Azure.AI.FormRecognizer.DocumentAnalysis;
-using SlipIntelligence.Application.Interfaces;
+﻿using SlipIntelligence.Application.Interfaces;
 using SlipIntelligence.Domain;
 using SlipIntelligence.Infrastructure.Interfaces;
 
@@ -25,22 +23,23 @@ public class AzureDocumentService : IAzureDocumentService
         using var stream = new MemoryStream(documentBytes);
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
 
-        var slipFields = response.Documents
-            .SelectMany(doc => doc.Fields
-                .Select(fieldKvp => new SlipField
+        var fieldDict = response.Documents
+            .SelectMany(doc => doc.Fields)
+            .ToDictionary(
+                fieldKvp => fieldKvp.Key,
+                fieldKvp => new SlipField
                 {
-                    Name = fieldKvp.Key,
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
-                }))
-            .ToList();
+                }
+            );
 
         return new AnalyzeResultDto
         {
             ApiVersion = response.ServiceVersion,
             ModelId = response.ModelId,
             Content = response.Content,
-            Fields = slipFields
+            Fields = fieldDict
         };
     }
 
@@ -49,22 +48,23 @@ public class AzureDocumentService : IAzureDocumentService
         var documentUri = new Uri(request.UriDocument);
         var response = await _azureDocumentClient.AnalyzeDocumentUriAsync(documentUri);
 
-        var slipFields = response.Documents
-            .SelectMany(doc => doc.Fields
-                .Select(fieldKvp => new SlipField
+        var fieldDict = response.Documents
+            .SelectMany(doc => doc.Fields)
+            .ToDictionary(
+                fieldKvp => fieldKvp.Key,
+                fieldKvp => new SlipField
                 {
-                    Name = fieldKvp.Key,
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
-                }))
-            .ToList();
+                }
+            );
 
         return new AnalyzeResultDto
         {
             ApiVersion = response.ServiceVersion,
             ModelId = response.ModelId,
             Content = response.Content,
-            Fields = slipFields
+            Fields = fieldDict
         };
     }
 
@@ -81,22 +81,23 @@ public class AzureDocumentService : IAzureDocumentService
 
         var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(memoryStream);
 
-        var slipFields = response.Documents
-            .SelectMany(doc => doc.Fields
-                .Select(fieldKvp => new SlipField
+        var fieldDict = response.Documents
+            .SelectMany(doc => doc.Fields)
+            .ToDictionary(
+                fieldKvp => fieldKvp.Key,
+                fieldKvp => new SlipField
                 {
-                    Name = fieldKvp.Key,
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
-                }))
-            .ToList();
+                }
+            );
 
         return new AnalyzeResultDto
         {
             ApiVersion = response.ServiceVersion,
             ModelId = response.ModelId,
             Content = response.Content,
-            Fields = slipFields
+            Fields = fieldDict
         };
     }
 }
