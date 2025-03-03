@@ -1,7 +1,4 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-
-using SlipIntelligence.Application.Extensions;
+﻿using SlipIntelligence.Application.Extensions;
 using SlipIntelligence.Application.Models.SlipIntelligence;
 
 namespace SlipIntelligence.Application.Contracts.SlipIntelligence;

@@ -1,11 +1,5 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
+﻿namespace SlipIntelligence.Infrastructure.Interfaces;
 
-namespace SlipIntelligence.Infrastructure.Interfaces;
-
-public interface IAzureBlobClient
-{
+public interface IAzureBlobClient {
     Task<Stream> GetBlobStreamAsync(string containerName, string blobName);
 }
-

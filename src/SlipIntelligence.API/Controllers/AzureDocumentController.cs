@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 using SlipIntelligence.Application.Contracts.SlipIntelligence;
 using SlipIntelligence.Application.Extensions;
