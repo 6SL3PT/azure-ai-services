@@ -25,9 +25,7 @@ public class Startup {
                 ?? throw new InvalidOperationException("Azure:DocumentIntelligence:Endpoint is not configured.");
             var apiKey = Configuration["Azure:DocumentIntelligence:ApiKey"]
                 ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ApiToken is not configured.");
-            var modelId = Configuration["Azure:DocumentIntelligence:ModelId"]
-                ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ModelId is not configured.");
-            return new AzureDocumentClient(new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey)), modelId);
+            return new AzureDocumentClient(new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey)));
         });
 
         // Configure Azure Blob Storage client
