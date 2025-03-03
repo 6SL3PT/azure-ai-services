@@ -14,9 +14,14 @@ public class AzureDocumentService : IAzureDocumentService
         _azureDocumentClient = azureDocumentClient;
     }
 
-    public async Task<AnalyzeResultDto> AnalyzeDocumentStreamAsync(Stream documentStream)
+    public async Task<AnalyzeResultDto> AnalyzeDocumentBase64Async(Base64Request request)
     {
-        var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(documentStream);
+        var documentBytes = Convert.FromBase64String(request.Base64Document);
+
+        // Convert Base64 string to a byte array
+        using var stream = new MemoryStream(documentBytes);
+        var response = await _azureDocumentClient.AnalyzeDocumentStreamAsync(stream);
+
         return new AnalyzeResultDto
         {
             Status = "success",
@@ -24,9 +29,11 @@ public class AzureDocumentService : IAzureDocumentService
         };
     }
 
-    public async Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(Uri documentUri)
+    public async Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(UriRequest request)
     {
+        var documentUri = new Uri(request.UriDocument);
         var result = await _azureDocumentClient.AnalyzeDocumentUriAsync(documentUri);
+
         return new AnalyzeResultDto
         {
             Status = "success",

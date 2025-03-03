@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SlipIntelligence.Application.Interfaces;
-using SlipIntelligence.Api.Models;
+using SlipIntelligence.Domain;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,20 +19,16 @@ public class AzureDocumentController : ControllerBase
     }
 
     [HttpPost("base64")]
-    public async Task<IActionResult> TextExtractFromBase64([FromBody] Base64ImageRequestModel request)
+    public async Task<IActionResult> TextExtractFromBase64([FromBody] Base64Request request)
     {
-        if (string.IsNullOrEmpty(request.Base64Image))
+        if (string.IsNullOrEmpty(request.Base64Document))
         {
             return BadRequest("No image provided.");
         }
 
         try
         {
-            // Convert Base64 string to a byte array
-            var imageBytes = Convert.FromBase64String(request.Base64Image);
-
-            using var stream = new MemoryStream(imageBytes);
-            var result = await _azureDocumentService.AnalyzeDocumentStreamAsync(stream);
+            var result = await _azureDocumentService.AnalyzeDocumentBase64Async(request);
             return Ok(result);
         }
         catch (Exception ex)

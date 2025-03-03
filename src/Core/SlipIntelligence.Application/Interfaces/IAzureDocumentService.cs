@@ -6,6 +6,6 @@ namespace SlipIntelligence.Application.Interfaces;
 
 public interface IAzureDocumentService
 {
-    Task<AnalyzeResultDto> AnalyzeDocumentStreamAsync(Stream documentStream);
-    Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(Uri documentUri);
+    Task<AnalyzeResultDto> AnalyzeDocumentBase64Async(Base64Request request);
+    Task<AnalyzeResultDto> AnalyzeDocumentUriAsync(UriRequest request);
 }
