@@ -3,6 +3,8 @@ using SlipIntelligence.Application.Extensions;
 using SlipIntelligence.Application.Models.SlipIntelligence;
 using SlipIntelligence.Infrastructure.Interfaces;
 
+using System.Text.Json;
+
 namespace SlipIntelligence.Application.Services;
 
 public class AzureDocumentService: IAzureDocumentService {
@@ -24,7 +26,7 @@ public class AzureDocumentService: IAzureDocumentService {
         var fieldDict = response.Documents
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
-                fieldKvp => fieldKvp.Key,
+                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
                 fieldKvp => new SlipFieldDto {
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
@@ -47,7 +49,7 @@ public class AzureDocumentService: IAzureDocumentService {
         var fieldDict = response.Documents
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
-                fieldKvp => fieldKvp.Key,
+                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
                 fieldKvp => new SlipFieldDto {
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
@@ -78,7 +80,7 @@ public class AzureDocumentService: IAzureDocumentService {
         var fieldDict = response.Documents
             .SelectMany(doc => doc.Fields)
             .ToDictionary(
-                fieldKvp => fieldKvp.Key,
+                fieldKvp => JsonNamingPolicy.CamelCase.ConvertName(fieldKvp.Key),
                 fieldKvp => new SlipFieldDto {
                     Content = fieldKvp.Value.Content,
                     Confidence = fieldKvp.Value.Confidence
