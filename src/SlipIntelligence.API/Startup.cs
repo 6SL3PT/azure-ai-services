@@ -1,4 +1,5 @@
-﻿using SlipIntelligence.Application.Contracts.SlipIntelligence;
+﻿using SlipIntelligence.Api.Middlewares;
+using SlipIntelligence.Application.Contracts.SlipIntelligence;
 using SlipIntelligence.Application.Services;
 using SlipIntelligence.Infrastructure.Interfaces;
 using SlipIntelligence.Infrastructure.Implementations;
@@ -10,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
 namespace SlipIntelligence.API;
-
 public class Startup {
     public Startup(IConfiguration configuration) {
         Configuration = configuration;
@@ -26,7 +26,7 @@ public class Startup {
             var endpoint = Configuration["Azure:DocumentIntelligence:Endpoint"]
                 ?? throw new InvalidOperationException("Azure:DocumentIntelligence:Endpoint is not configured.");
             var apiKey = Configuration["Azure:DocumentIntelligence:ApiKey"]
-                ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ApiKey is not configured.");
+                ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ApiToken is not configured.");
             var modelId = Configuration["Azure:DocumentIntelligence:ModelId"]
                 ?? throw new InvalidOperationException("Azure:DocumentIntelligence:ModelId is not configured.");
             return new AzureDocumentClient(endpoint, apiKey, modelId);
@@ -58,6 +58,8 @@ public class Startup {
 
         app.UseHttpsRedirection();
         app.UseRouting();
+
+        app.UseMiddleware<SimpleAuthenticationMiddleware>(Configuration);
         app.UseAuthorization();
 
         // Enable middleware to serve generated Swagger as a JSON endpoint

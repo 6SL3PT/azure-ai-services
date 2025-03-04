@@ -1,20 +1,13 @@
-﻿namespace SlipIntelligence.Application.Extensions
-{
-    public class ResponseMessage<T>
-    {
+﻿namespace SlipIntelligence.Application.Extensions {
+    public class ResponseMessage<T> {
         public ResponseMessageStatus Status { set; get; }
         public object Data { get; }
-        public ResponseMessage(object value)
-        {
+        public ResponseMessage(object value) {
             Status = new ResponseMessageStatus();
-            if (value is ErrorMessage)
-            {
-                if ((value as ErrorMessage).MetaData.Count > 1 && (value as ErrorMessage).MetaData != null)
-                {
+            if(value is ErrorMessage errorMessage) {
+                if(errorMessage.MetaData != null && errorMessage.MetaData.Count > 1) {
                     Status.Code = 4002;
-                }
-                else
-                {
+                } else {
                     Status.Code = 4001;
                 }
             }
@@ -22,16 +15,12 @@
         }
     }
 
-    public class ResponseMessageStatus
-    {
+    public class ResponseMessageStatus {
         public int Code { get; set; } = 1000;
         public string CustomMessage { set; private get; } = string.Empty;
-        public string Description
-        {
-            get
-            {
-                switch (Code)
-                {
+        public string Description {
+            get {
+                switch(Code) {
                     case 1000:
                         return $"Success.{CustomMessage}";
                     case 4001:
@@ -45,17 +34,14 @@
         }
     }
 
-    public class ErrorMessage
-    {
+    public class ErrorMessage {
         public string SubCode { get; set; }
         public string Description { set; get; }
         public Dictionary<string, object> MetaData { set; get; }
-        public ErrorMessage(int code, string customMessage = "")
-        {
+        public ErrorMessage(int code, string customMessage = "") {
             MetaData = new Dictionary<string, object>();
             SubCode = $"E{code}";
-            switch (code)
-            {
+            switch(code) {
                 case 1101:
                     Description = $"Missing required parameters.{customMessage}";
                     break;

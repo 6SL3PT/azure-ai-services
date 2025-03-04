@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using SlipIntelligence.Application.Contracts.SlipIntelligence;
 using SlipIntelligence.Application.Extensions;
 using SlipIntelligence.Application.Models.SlipIntelligence;
-// using SystemContract = SlipIntelligence.Application.Contracts.System;
 
 namespace SlipIntelligence.Api.Controllers;
 
