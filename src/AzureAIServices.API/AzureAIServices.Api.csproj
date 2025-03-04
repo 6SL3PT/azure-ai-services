@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>f9e10c6f-9bde-45c4-b9c5-73da98bd93d6</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <!-- <UserSecretsId>57779da2-e027-49b1-8731-f83726944753</UserSecretsId> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Core" Version="8.0.1" />
+    <PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.21.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AzureAIServices.Application\AzureAIServices.Application.csproj" />
+    <ProjectReference Include="..\AzureAIServices.Infrastructure\AzureAIServices.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
